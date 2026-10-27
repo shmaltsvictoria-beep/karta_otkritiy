@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Карта открытий</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Georgia, "Times New Roman", serif;
+    background: #d8c49a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .map {
+    position: relative;
+    width: min(1100px, 96vw);
+    min-height: 700px;
+    overflow: hidden;
+    border: 12px solid #6f4d2c;
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,.18), transparent 25%),
+      radial-gradient(circle at 80% 75%, rgba(91,55,20,.12), transparent 28%),
+      #ead9ae;
+    box-shadow: 0 15px 35px rgba(0,0,0,.3);
+  }
+  .map:before {
+    content: "";
+    position: absolute;
+    inset: 25px;
+    border: 3px dashed rgba(93,61,29,.45);
+    border-radius: 30px;
+    pointer-events: none;
+  }
+  h1 {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    margin: 28px 0 0;
+    color: #4d321b;
+    font-size: clamp(32px, 5vw, 54px);
+    text-shadow: 1px 2px 0 #f5e8c6;
+  }
+  .subtitle {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: #6b4928;
+    font-size: 18px;
+    margin-top: 4px;
+  }
+  .land {
+    position: absolute;
+    left: 12%;
+    top: 30%;
+    width: 72%;
+    height: 48%;
+    background: #c6a76b;
+    border: 4px solid #806036;
+    border-radius: 45% 55% 48% 52% / 50% 44% 56% 50%;
+    transform: rotate(-4deg);
+    opacity: .78;
+  }
+  .path {
+    position: absolute;
+    left: 25%;
+    top: 58%;
+    width: 48%;
+    height: 4px;
+    background: #7d5a31;
+    transform: rotate(-12deg);
+    box-shadow: 0 0 0 2px rgba(245,225,175,.4);
+  }
+  .window {
+    position: absolute;
+    left: 50%;
+    top: 49%;
+    transform: translate(-50%, -50%);
+    width: 190px;
+    height: 150px;
+    border: 5px solid #70491f;
+    border-radius: 18px;
+    background: linear-gradient(#a96f2f, #754719);
+    color: #fff4d2;
+    cursor: pointer;
+    box-shadow: 0 9px 18px rgba(0,0,0,.35);
+    transition: transform .2s, box-shadow .2s;
+    font-family: inherit;
+  }
+  .window:hover {
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 12px 24px rgba(0,0,0,.42);
+  }
+  .window .lock { font-size: 48px; display: block; margin-bottom: 6px; }
+  .window .label { font-size: 22px; font-weight: bold; }
+  .hint {
+    position: absolute;
+    bottom: 28px;
+    width: 100%;
+    text-align: center;
+    color: #654622;
+    font-size: 16px;
+  }
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(34,22,10,.68);
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .artifact {
+    width: min(520px, 92vw);
+    background: #f2dfb1;
+    border: 8px solid #714b25;
+    border-radius: 22px;
+    padding: 35px 30px 28px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+    animation: pop .25s ease-out;
+  }
+  @keyframes pop {
+    from { transform: scale(.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .artifact-icon { font-size: 76px; }
+  .artifact h2 {
+    color: #513419;
+    font-size: 34px;
+    margin: 12px 0;
+  }
+  .artifact p {
+    color: #654622;
+    font-size: 19px;
+    margin: 0 0 24px;
+  }
+  .close {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 25px;
+    background: #70491f;
+    color: white;
+    font: inherit;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="map">
+  <h1>🗺️ Карта открытий</h1>
+  <div class="subtitle">Открывай окна и находи артефакты</div>
+
+  <div class="land"></div>
+  <div class="path"></div>
+
+  <button class="window" onclick="openArtifact()">
+    <span class="lock">🔒</span>
+    <span class="label">Окно №1</span>
+  </button>
+
+  <div class="hint">Нажми на закрытое окно, чтобы открыть первый артефакт</div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeIfOutside(event)">
+  <div class="artifact">
+    <div class="artifact-icon">🛡️</div>
+    <h2>Сила рода</h2>
+    <p>Первый найденный артефакт на карте открытий.</p>
+    <button class="close" onclick="closeArtifact()">Закрыть</button>
+  </div>
+</div>
+
+<script>
+function openArtifact() {
+  document.getElementById('overlay').classList.add('show');
+}
+function closeArtifact() {
+  document.getElementById('overlay').classList.remove('show');
+}
+function closeIfOutside(event) {
+  if (event.target.id === 'overlay') closeArtifact();
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeArtifact();
+});
+</script>
+</body>
+</html>
